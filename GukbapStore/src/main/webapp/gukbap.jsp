@@ -1,13 +1,20 @@
 ﻿<%@ page contentType="text/html; charset=utf-8"%>
-<%@ page import="dto.Gukbap"%>
-<%@ page import="dao.GukbapRepository"%>
+<%@ page import="java.sql.*"%>
 <%@ page errorPage = "exceptionNoGukbapId.jsp"%>
-
 <html>
 <head>
  <link href = "./resources/css/bootstrap.min.css" rel="stylesheet">
 
 <title>국밥 메뉴 정보</title>
+<script type="text/javascript">
+	function addToCart() {
+		if (confirm("메뉴를 장바구니에 추가하시겠습니까?")) {
+			document.addForm.submit();
+		} else {		
+			document.addForm.reset();
+		}
+	}
+</script>
 </head>
 <body>
 <div class="container py-4">
@@ -19,34 +26,61 @@
         <p class="col-md-8 fs-4">GukbapInfo</p>      
       </div>
     </div>
-	
-	<%
-		String id = request.getParameter("id");
-		GukbapRepository dao = GukbapRepository.getInstance();
-		Gukbap gukbap = dao.getGukbapById(id);
-	%>
+	<%@ include file="dbconn.jsp" %>  
+   <%
+       String id = request.getParameter("id");
+       if (id == null || id.trim().isEmpty()) {
+           response.sendRedirect("exceptionNoGukbapId.jsp");
+           return;
+       }
+       PreparedStatement pstmt = null;
+       ResultSet rs = null;
+       
+       try {
+           String sql = "SELECT * FROM gukbap WHERE g_id = ?";
+           pstmt = conn.prepareStatement(sql);
+           pstmt.setString(1, id);
+           rs = pstmt.executeQuery();
+           
+           if (!rs.next()) {
+               response.sendRedirect("exceptionNoGukbapId.jsp");
+               return;
+           }
+   %>
 	 <div class="row align-items-md-stretch">
 	 		<div class="col-md-5">
-				<img src="./resources/images/<%=gukbap.getFileName()%>" style="width: 70%">
+				<img src="./resources/images/<%=rs.getString("g_filename")%>" style="width: 70%">
 			</div>
 			<div class="col-md-12">
-				<h3><b><%=gukbap.getName()%></b></h3>
-				<p><%=gukbap.getDescription()%>
-				<p><b>메뉴 번호 : </b><span class="badge text-bg-danger"> <%=gukbap.getGukbapId()%></span>											
-				<p><b>분류</b> : <%=gukbap.getCategory()%>
-				<p><b>총 주문수</b> : <%=gukbap.getOrderQuantity()%>
+				<h3><b><%=rs.getString("g_name")%></b></h3>
+				<p><%=rs.getString("g_description")%>
+				<p><b>메뉴 번호 : </b><span class="badge text-bg-danger"> <%=rs.getString("g_id")%></span>											
+				<p><b>분류</b> : <%=rs.getString("g_category")%>
+				<p><b>총 주문수</b> : <%=rs.getString("g_orderQuantity")%>
 				<p>평점 : <%
-                        int rating = gukbap.getReviewRating();
-                        for(int idx = 0; idx < rating; idx++){
-                            out.print("★");
-                        }
+						int rating = Integer.parseInt(rs.getString("g_reviewRating"));
+		                for(int idx = 0; idx < rating; idx++){
+		                    out.print("★");
+		                }
                     %>
-               	<p><%=gukbap.getReviewCount() %>개의 리뷰
-				<p>가격 : <%=gukbap.getPrice()%>원
-				<p><a href="#" class="btn btn-info"> 메뉴 주문 &raquo;</a> 
-					<a href="./gukbaps.jsp" class="btn btn-secondary"> 국밥메뉴목록 &raquo;</a>
+                <p><%=rs.getString("g_reviewCount")%>개의 리뷰
+				<p><%=rs.getString("g_price")%>원
+				<p><form name="addForm" action="./addCart.jsp?id=<%=rs.getString("g_id")%>" method="post">
+				<a href="#" class="btn btn-info" onclick="addToCart()"> 메뉴주문 &raquo;</a> 
+				    <a href="./cart.jsp" class="btn btn-warning"> 장바구니 &raquo;</a>				
+					<a href="./gukbaps.jsp" class="btn btn-secondary"> 메뉴목록 &raquo;</a>
+					</form>
 			</div>
 		</div>
+		<%
+       } catch (Exception e) {
+           e.printStackTrace();
+       } finally {
+           if (rs != null) try { rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+           if (pstmt != null) try { pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+           if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+       }
+   %>
 	<jsp:include page="footer.jsp" />
 </div>
 </body>

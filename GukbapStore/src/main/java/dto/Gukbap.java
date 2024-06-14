@@ -14,7 +14,7 @@ public class Gukbap implements Serializable {
 	private int reviewRating;		//리뷰평점
 	private int reviewCount;		//리뷰수
 	private String fileName;        //이미지
-	
+	private int shoppingBasket;		//장바구니에 담은 개수
 
 	public Gukbap() {
 		super();
@@ -97,6 +97,14 @@ public class Gukbap implements Serializable {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+	}
+	
+	public int getShoppingBasket() {
+		return shoppingBasket;
+	}
+
+	public void setShoppingBasket(int shoppingBasket) {
+		this.shoppingBasket = shoppingBasket;
 	}
 
 	
